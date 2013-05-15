@@ -98,19 +98,17 @@ After executing the named kbd macro the calling macro will continue execution.
 You should define and name some macros first using `kmacro-start-macro' (C-x ( or f3),
 and `kmacro-name-last-macro' (C-x C-k n)."
   (interactive)
-  (or executing-kbd-macro
-      defining-kbd-macro
-      (error "Not defining or executing kbd macro"))
-  (if executing-kbd-macro
-      (let* ((executing-kbd-macro nil)
-             (defining-kbd-macro nil)
-             (val (kbd-macro-fork-menu)))
-        (cond ((functionp val) (funcall val))
-              ((eq val 'quit) (setq quit-flag t))
-              ((eq val 'continue) nil)
-              ((eq val 'edit) (recursive-edit))
-              ((eq val 'command) (call-interactively 'execute-extended-command))
-              ((eq val 'sexp) (call-interactively 'eval-expression))))))
+  (if defining-kbd-macro
+      nil
+    (let* ((executing-kbd-macro nil)
+           (defining-kbd-macro nil)
+           (val (kbd-macro-fork-menu)))
+      (cond ((functionp val) (funcall val))
+            ((eq val 'quit) (setq quit-flag t))
+            ((eq val 'continue) nil)
+            ((eq val 'edit) (recursive-edit))
+            ((eq val 'command) (call-interactively 'execute-extended-command))
+            ((eq val 'sexp) (call-interactively 'eval-expression))))))
 
 (defun kbd-macro-fork-menu nil
   "Prompt the user for a kbd macro using a keyboard menu."
