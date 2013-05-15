@@ -12,11 +12,11 @@
 ;; URL: https://github.com/vapniks/kmacro-query-extra
 ;; Keywords: convenience
 ;; Compatibility: GNU Emacs 24.3.1
-;; Package-Requires:  
+;; Package-Requires: ((cl-format "1.0"))
 ;;
 ;; Features that might be required by this library:
 ;;
-;; 
+;; cl-format
 ;;
 
 ;;; This file is NOT part of GNU Emacs
@@ -79,13 +79,13 @@
 
 ;;; TODO
 ;;
-;; Finish `kbd-macro-menu', and integrate with `one-key-read-list' if available.
+;; Finish `kbd-macro-fork-menu', and integrate with `one-key-read-list' if available.
 ;; Create `kbd-macro-condition' function for inserting a cond form in a kbd macro
 ;; (need to think of good user interface for this).
 ;;
 
 ;;; Require
-
+(require 'cl-format)
 
 ;;; Code:
 
@@ -114,24 +114,20 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                                                 t)))))))
 
 
-(defun kbd-macro-menu nil
+(defun kbd-macro-fork-menu nil
   "Prompt the user for a kbd macro using a keyboard menu."
   (let* ((kmacros (cl-loop for elt being the symbols
-                          if (and (fboundp elt)
-                                  (or (stringp (symbol-function elt))
-                                      (vectorp (symbol-function elt))
-                                      (get elt 'kmacro)))
-                          collect elt))
-         (names (mapcar 'symbol-name kmacros))
-         
+                           if (and (fboundp elt)
+                                   (or (stringp (symbol-function elt))
+                                       (vectorp (symbol-function elt))
+                                       (get elt 'kmacro)))
+                           collect elt))
+         (prompt (loop for i from 0 to (1- (length kmacros))
+                       for kmacro = (nth i kmacros)
+                       concat (format "%d) %s\n" i kmacro))))
+    (nth (read-number prompt -1) kmacros)))
 
-    
-    (completing-read "test " kmacros nil t))
-                 
-(read-key (format "key is already in use! Press one of the following keys:
-1 : %s
-2 : %s
-3 : %s" "a" "b" "c"))
+
 
 (provide 'kmacro-query-extra)
 
