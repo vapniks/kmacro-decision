@@ -1,0 +1,22 @@
+* Library Information
+ Readme.org --- Extra query functions for emacs keyboard macros
+
+ - Filename :: [[file:kmacro-query-extra.el][kmacro-query-extra.el]]
+ - Description :: Extra query functions for emacs keyboard macros
+ - Author :: Joe Bloggs <vapniks@yahoo.com>
+ - Maintainer :: Joe Bloggs <vapniks@yahoo.com>
+ - Copyleft (Ↄ) 2013, Joe Bloggs, all rites reversed.
+ - Created :: 2013-05-15 05:04:08
+ - Version :: 0.1
+ - Last-Updated :: 2013-05-15 05:04:08
+ -           By :: Joe Bloggs
+ - URL :: https://github.com/vapniks/kmacro-query-extra
+ - Keywords :: convenience
+ - Compatibility :: GNU Emacs 24.3.1
+Package-Requires:  
+
+* Installation
+
+ - If you have [[http://www.marmalade-repo.org/][marmalade-repo.org]], this kmacro-query-extra is part of the emacs packages you can install.  Just type M-x package-install kmacro-query-extra marmalade 
+ - Otherwise download the library from here Lisp:kmacro-query-extra, and put it in a directory in the emacs load path, like ~/.emacs.d
+ - Add (require 'kmacro-query-extra) in your ~/.emacs file
