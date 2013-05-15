@@ -102,17 +102,15 @@ and `kmacro-name-last-macro' (C-x C-k n)."
       defining-kbd-macro
       (error "Not defining or executing kbd macro"))
   (if executing-kbd-macro
-      (let (executing-kbd-macro)
-        (funcall (symbol-function
-                  (intern-soft (completing-read "Execute kbd macro (name): "
-                                                obarray
-                                                (lambda (elt)
-                                                  (and (fboundp elt)
-                                                       (or (stringp (symbol-function elt))
-                                                           (vectorp (symbol-function elt))
-                                                           (get elt 'kmacro))))
-                                                t)))))))
-
+      (let* ((executing-kbd-macro nil)
+             (defining-kbd-macro nil)
+             (val (kbd-macro-fork-menu)))
+        (cond ((functionp val) (funcall val))
+              ((eq val 'quit) (setq quit-flag t))
+              ((eq val 'continue) nil)
+              ((eq val 'edit) (recursive-edit))
+              ((eq val 'command) (call-interactively 'execute-extended-command))
+              ((eq val 'sexp) (call-interactively 'eval-expression))))))
 
 (defun kbd-macro-fork-menu nil
   "Prompt the user for a kbd macro using a keyboard menu."
@@ -122,11 +120,20 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                                        (vectorp (symbol-function elt))
                                        (get elt 'kmacro)))
                            collect elt))
-         (prompt (loop for i from 0 to (1- (length kmacros))
-                       for kmacro = (nth i kmacros)
-                       concat (format "%d) %s\n" i kmacro))))
-    (nth (read-number prompt -1) kmacros)))
-
+         (prompt (concat "C-g) Quit\nSPC) Continue\nRET) Enter recursive edit (C-M-c to exit)
+M-x) Enter command\nM-:) Enter sexp\n"
+                         (loop for i from 0 to (1- (length kmacros))
+                               for kmacro = (nth i kmacros)
+                               concat (format "%c) %s\n" (+ 97 i) kmacro))))
+         (key (read-key prompt)))
+    (cond ((= key 32) 'continue)
+          ((= key 13) 'edit)
+          ((= key 134217848) 'command)
+          ((= key 134217786) 'sexp)
+          ((and (> key 96)
+                (< key (+ 97 (length kmacros))))
+           (symbol-function (nth (- key 97) kmacros)))
+          (t 'quit))))
 
 
 (provide 'kmacro-query-extra)
