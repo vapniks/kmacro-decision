@@ -107,8 +107,12 @@ and `kmacro-name-last-macro' (C-x C-k n)."
             ((eq val 'quit) (setq quit-flag t))
             ((eq val 'continue) nil)
             ((eq val 'edit) (recursive-edit))
-            ((eq val 'command) (call-interactively 'execute-extended-command))
-            ((eq val 'sexp) (call-interactively 'eval-expression))))))
+            ((eq val 'new)
+             (kmacro-start-macro nil)
+             (recursive-edit)
+             (kmacro-end-macro nil)
+             (kmacro-cycle-ring-previous)
+             (call-interactively 'kmacro-name-last-macro))))))
 
 (defun kbd-macro-decision-menu nil
   "Prompt the user for a kbd macro using a keyboard menu."
@@ -118,16 +122,18 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                                        (vectorp (symbol-function elt))
                                        (get elt 'kmacro)))
                            collect elt))
-         (prompt (concat "C-g) Quit\nSPC) Continue\nRET) Enter recursive edit (C-M-c to exit)
-M-x) Enter command\nM-:) Enter sexp\n"
+         (prompt (concat "C-g : Quit
+SPC : Continue
+RET : Enter recursive edit (C-M-c to exit)
+C-n : Define new macro (C-M-c to exit)
+"
                          (loop for i from 0 to (1- (length kmacros))
                                for kmacro = (nth i kmacros)
-                               concat (format "%c) %s\n" (+ 97 i) kmacro))))
+                               concat (format "%c   : %s\n" (+ 97 i) kmacro))))
          (key (read-key prompt)))
     (cond ((= key 32) 'continue)
           ((= key 13) 'edit)
-          ((= key 134217848) 'command)
-          ((= key 134217786) 'sexp)
+          ((= key 14) 'new)
           ((and (> key 96)
                 (< key (+ 97 (length kmacros))))
            (symbol-function (nth (- key 97) kmacros)))
