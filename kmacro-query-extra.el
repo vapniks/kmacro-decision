@@ -79,7 +79,7 @@
 
 ;;; TODO
 ;;
-;; Finish `kbd-macro-fork-menu', and integrate with `one-key-read-list' if available.
+;; Finish `kbd-macro-decision-menu', and integrate with `one-key-read-list' if available.
 ;; Create `kbd-macro-condition' function for inserting a cond form in a kbd macro
 ;; (need to think of good user interface for this).
 ;;
@@ -89,7 +89,7 @@
 
 ;;; Code:
 
-(defun kbd-macro-fork nil
+(defun kbd-macro-decision nil
   "Query user for another kbd macro to execute during execution of current kbd macro.
 If called while defining a kbd macro then a query point will be inserted into the
 kbd macro which will ask the user for a named kbd macro to execute at that point.
@@ -102,7 +102,7 @@ and `kmacro-name-last-macro' (C-x C-k n)."
       nil
     (let* ((executing-kbd-macro nil)
            (defining-kbd-macro nil)
-           (val (kbd-macro-fork-menu)))
+           (val (kbd-macro-decision-menu)))
       (cond ((functionp val) (funcall val))
             ((eq val 'quit) (setq quit-flag t))
             ((eq val 'continue) nil)
@@ -110,7 +110,7 @@ and `kmacro-name-last-macro' (C-x C-k n)."
             ((eq val 'command) (call-interactively 'execute-extended-command))
             ((eq val 'sexp) (call-interactively 'eval-expression))))))
 
-(defun kbd-macro-fork-menu nil
+(defun kbd-macro-decision-menu nil
   "Prompt the user for a kbd macro using a keyboard menu."
   (let* ((kmacros (cl-loop for elt being the symbols
                            if (and (fboundp elt)
