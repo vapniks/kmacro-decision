@@ -111,8 +111,25 @@ and `kmacro-name-last-macro' (C-x C-k n)."
              (kmacro-start-macro nil)
              (recursive-edit)
              (kmacro-end-macro nil)
-             (kmacro-cycle-ring-previous)
+             ;; TODO: need some way to cycle the kmacro-ring without clobbering the calling macro
+             ;; create function `kmacro-cycle-ring-previous-undisturb' to do this.
+             ;(kmacro-cycle-ring-previous)
              (call-interactively 'kmacro-name-last-macro))))))
+
+;; TODO: this will need to replace `kmacro-pop-ring1' I think.
+(defun kmacro-cycle-ring-previous-undisturb nil
+  "Move to previous keyboard macro in keyboard macro ring without disturbing currently running macro."
+  (unless (kmacro-ring-empty-p)
+    (let ((keys (kmacro-get-repeat-prefix))
+	  (cur (kmacro-ring-head)))
+      (kmacro-pop-ring1)
+      (if kmacro-ring
+	  (nconc kmacro-ring (list cur))
+	(setq kmacro-ring (list cur)))
+      (kmacro-display last-kbd-macro t)
+      (if keys
+	  (kmacro-repeat-on-last-key keys))))
+  )
 
 (defun kbd-macro-decision-menu nil
   "Prompt the user for a kbd macro using a keyboard menu."
