@@ -108,8 +108,7 @@ and `kmacro-name-last-macro' (C-x C-k n)."
       (cond ((functionp val) (funcall val))
             ((eq val 'quit) (setq quit-flag t)) 
             ((eq val 'continue) nil)
-            ((eq val 'edit) (recursive-edit)) 
-            ((eq val 'new)
+            ((eq val 'edit)
              ;; Create a new macro.
              ;; Save the macro at the end of kmacro-ring since
              ;; it will be removed when we start recording the new macro.
@@ -123,11 +122,12 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                  (recursive-edit))
                ;; now we can end the macro
                (end-kbd-macro nil #'kmacro-loop-setup-function)
-               ;; ignore empty macros, prompt for a name for others
-               (if (or (not last-kbd-macro)
-                       (and last-kbd-macro (= (length last-kbd-macro) 0)))
-                   (message "Ignore empty macro")
-                 (call-interactively 'kmacro-name-last-macro))
+               (if (y-or-n-p "Save as named macro?")
+                   ;; ignore empty macros, prompt for a name for others
+                   (if (or (not last-kbd-macro)
+                           (and last-kbd-macro (= (length last-kbd-macro) 0)))
+                       (message "Ignore empty macro")
+                     (call-interactively 'kmacro-name-last-macro)))
                ;; pop the calling macro back
                (kmacro-pop-ring1)
                ;; put last-macro back
@@ -143,8 +143,7 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                            collect elt))
          (prompt (concat "C-g : Quit
 SPC : Continue
-RET : Enter recursive edit (C-M-c to exit)
-C-n : Define new macro (C-M-c to exit)
+RET : Edit (C-M-c to finish)
 "
                          (loop for i from 0 to (1- (length kmacros))
                                for kmacro = (nth i kmacros)
@@ -157,7 +156,6 @@ C-n : Define new macro (C-M-c to exit)
                 (< key (+ 97 (length kmacros))))
            (symbol-function (nth (- key 97) kmacros)))
           (t 'quit))))
-
 
 (provide 'kmacro-query-extra)
 
