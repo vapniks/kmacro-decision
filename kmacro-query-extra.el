@@ -12,11 +12,11 @@
 ;; URL: https://github.com/vapniks/kmacro-query-extra
 ;; Keywords: convenience
 ;; Compatibility: GNU Emacs 24.3.1
-;; Package-Requires: ((cl-format "1.0"))
+;; Package-Requires: ((el-x "1.0"))
 ;;
 ;; Features that might be required by this library:
 ;;
-;; cl-format
+;; el-x
 ;;
 
 ;;; This file is NOT part of GNU Emacs
@@ -85,7 +85,7 @@
 ;;
 
 ;;; Require
-(require 'cl-format)
+(require 'el-x)
 
 ;;; Code:
 
@@ -100,36 +100,38 @@ and `kmacro-name-last-macro' (C-x C-k n)."
   (interactive)
   (if defining-kbd-macro
       nil
+    ;; temporarily clear the currently executing macro
     (let* ((executing-kbd-macro nil)
            (defining-kbd-macro nil)
+           ;; prompt the user for a choice
            (val (kbd-macro-decision-menu)))
       (cond ((functionp val) (funcall val))
-            ((eq val 'quit) (setq quit-flag t))
+            ((eq val 'quit) (setq quit-flag t)) 
             ((eq val 'continue) nil)
-            ((eq val 'edit) (recursive-edit))
+            ((eq val 'edit) (recursive-edit)) 
             ((eq val 'new)
-             (kmacro-start-macro nil)
-             (recursive-edit)
-             (kmacro-end-macro nil)
-             ;; TODO: need some way to cycle the kmacro-ring without clobbering the calling macro
-             ;; create function `kmacro-cycle-ring-previous-undisturb' to do this.
-             ;(kmacro-cycle-ring-previous)
-             (call-interactively 'kmacro-name-last-macro))))))
-
-;; TODO: this will need to replace `kmacro-pop-ring1' I think.
-(defun kmacro-cycle-ring-previous-undisturb nil
-  "Move to previous keyboard macro in keyboard macro ring without disturbing currently running macro."
-  (unless (kmacro-ring-empty-p)
-    (let ((keys (kmacro-get-repeat-prefix))
-	  (cur (kmacro-ring-head)))
-      (kmacro-pop-ring1)
-      (if kmacro-ring
-	  (nconc kmacro-ring (list cur))
-	(setq kmacro-ring (list cur)))
-      (kmacro-display last-kbd-macro t)
-      (if keys
-	  (kmacro-repeat-on-last-key keys))))
-  )
+             ;; Create a new macro.
+             ;; Save the macro at the end of kmacro-ring since
+             ;; it will be removed when we start recording the new macro.
+             (let ((last-macro (last kmacro-ring))
+                   (ringlen (length kmacro-ring)))
+               ;; start recording the macro
+               (kmacro-start-macro nil)
+               ;; if the user tries to finish the macro just quit recursive-edit
+               (dflet ((end-kbd-macro (x y) (exit-recursive-edit))
+                       (kmacro-call-repeat-key nil))
+                 (recursive-edit))
+               ;; now we can end the macro
+               (end-kbd-macro nil #'kmacro-loop-setup-function)
+               ;; ignore empty macros, prompt for a name for others
+               (if (or (not last-kbd-macro)
+                       (and last-kbd-macro (= (length last-kbd-macro) 0)))
+                   (message "Ignore empty macro")
+                 (call-interactively 'kmacro-name-last-macro))
+               ;; pop the calling macro back
+               (kmacro-pop-ring1)
+               ;; put last-macro back
+               (nconc kmacro-ring last-macro)))))))
 
 (defun kbd-macro-decision-menu nil
   "Prompt the user for a kbd macro using a keyboard menu."
