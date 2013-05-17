@@ -101,37 +101,51 @@ and `kmacro-name-last-macro' (C-x C-k n)."
   (if defining-kbd-macro
       nil
     ;; temporarily clear the currently executing macro
-    (let* ((executing-kbd-macro nil)
+    (let* ((calling-kbd-macro executing-kbd-macro)
+           (executing-kbd-macro nil)
            (defining-kbd-macro nil)
-           ;; prompt the user for a choice
-           (val (kbd-macro-decision-menu)))
-      (cond ((functionp val) (funcall val))
-            ((eq val 'quit) (setq quit-flag t)) 
-            ((eq val 'continue) nil)
-            ((eq val 'edit)
-             ;; Create a new macro.
-             ;; Save the macro at the end of kmacro-ring since
-             ;; it will be removed when we start recording the new macro.
-             (let ((last-macro (last kmacro-ring))
-                   (ringlen (length kmacro-ring)))
-               ;; start recording the macro
-               (kmacro-start-macro nil)
-               ;; if the user tries to finish the macro just quit recursive-edit
-               (dflet ((end-kbd-macro (x y) (exit-recursive-edit))
-                       (kmacro-call-repeat-key nil))
-                 (recursive-edit))
-               ;; now we can end the macro
-               (end-kbd-macro nil #'kmacro-loop-setup-function)
-               (if (y-or-n-p "Save as named macro?")
-                   ;; ignore empty macros, prompt for a name for others
-                   (if (or (not last-kbd-macro)
-                           (and last-kbd-macro (= (length last-kbd-macro) 0)))
-                       (message "Ignore empty macro")
-                     (call-interactively 'kmacro-name-last-macro)))
-               ;; pop the calling macro back
-               (kmacro-pop-ring1)
-               ;; put last-macro back
-               (nconc kmacro-ring last-macro)))))))
+           (isvec (vectorp calling-kbd-macro)))
+      (if (eq (aref calling-kbd-macro executing-kbd-macro-index) 7)
+          (setq executing-kbd-macro-index (1+ executing-kbd-macro-index))
+        ;; otherwise prompt the user for a choice
+        (let ((val (kbd-macro-decision-menu)))
+          (cond ((functionp val) (funcall val))
+                ((eq val 'quit) (setq quit-flag t)) 
+                ((eq val 'continue) nil)
+                ((eq val 'edit)
+                 ;; Create a new macro.
+                 ;; Save the macro at the end of kmacro-ring since
+                 ;; it will be removed when we start recording the new macro.
+                 (let ((last-macro (last kmacro-ring))
+                       (ringlen (length kmacro-ring)))
+                   ;; start recording the macro
+                   (kmacro-start-macro nil)
+                   ;; if the user tries to finish the macro just quit recursive-edit
+                   (dflet ((end-kbd-macro (x y) (exit-recursive-edit))
+                           (kmacro-call-repeat-key nil))
+                     (recursive-edit))
+                   ;; now we can end the macro
+                   (end-kbd-macro nil #'kmacro-loop-setup-function)
+                   (if (y-or-n-p "Save as named macro?")
+                       ;; ignore empty macros, prompt for a name for others
+                       (if (or (not last-kbd-macro)
+                               (and last-kbd-macro (= (length last-kbd-macro) 0)))
+                           (message "Ignore empty macro")
+                         (call-interactively 'kmacro-name-last-macro)))
+                   ;; pop the calling macro back
+                   (kmacro-pop-ring1)
+                   ;; put last-macro back
+                   (nconc kmacro-ring last-macro)))
+                ((eq val 'condition)
+                 (let* ((condition (read-from-minibuffer "Condition: "))
+                        (action "(message \"hi\")")
+                        (pre (subseq calling-kbd-macro 0 executing-kbd-macro-index))
+                        (post (subseq calling-kbd-macro executing-kbd-macro-index))
+                        (condcode (concatenate 'vector (kbd "M-:")
+                                               "(if " condition action
+                                               "(execute-kbd-macro " (prin1-to-string post)
+                                               "))")))
+                   (setq last-kbd-macro (concatenate 'vector pre "" condcode))))))))))
 
 (defun kbd-macro-decision-menu nil
   "Prompt the user for a kbd macro using a keyboard menu."
@@ -143,7 +157,8 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                            collect elt))
          (prompt (concat "C-g : Quit
 SPC : Continue
-RET : Edit (C-M-c to finish)
+RET : Recursive edit (C-M-c to finish)
+?   : Add conditional branch
 "
                          (loop for i from 0 to (1- (length kmacros))
                                for kmacro = (nth i kmacros)
@@ -152,6 +167,7 @@ RET : Edit (C-M-c to finish)
     (cond ((= key 32) 'continue)
           ((= key 13) 'edit)
           ((= key 14) 'new)
+          ((= key 63) 'condition)
           ((and (> key 96)
                 (< key (+ 97 (length kmacros))))
            (symbol-function (nth (- key 97) kmacros)))
