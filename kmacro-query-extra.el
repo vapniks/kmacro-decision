@@ -108,46 +108,63 @@ and `kmacro-name-last-macro' (C-x C-k n)."
       (if (eq (aref calling-kbd-macro executing-kbd-macro-index) 7)
           (setq executing-kbd-macro-index (1+ executing-kbd-macro-index))
         ;; otherwise prompt the user for a choice
-        (let ((val (kbd-macro-decision-menu)))
-          (cond ((functionp val) (funcall val))
-                ((eq val 'quit) (setq quit-flag t)) 
-                ((eq val 'continue) nil)
-                ((eq val 'edit)
-                 ;; Create a new macro.
-                 ;; Save the macro at the end of kmacro-ring since
-                 ;; it will be removed when we start recording the new macro.
+        (let ((val (kbd-macro-decision-menu t))
+              (editfunc ;; Function for creating and returning a macro
+               (lambda nil
+                 ;; Need to ensure final macro in kmacro-ring is replaced at the end
                  (let ((last-macro (last kmacro-ring))
-                       (ringlen (length kmacro-ring)))
-                   ;; start recording the macro
-                   (kmacro-start-macro nil)
-                   ;; if the user tries to finish the macro just quit recursive-edit
-                   (dflet ((end-kbd-macro (x y) (exit-recursive-edit))
+                       (ringlen (length kmacro-ring))
+                       macro name)
+                   (kmacro-start-macro nil) ;start recording macro
+                   ;; If end-kbd-macro is called just quit recursive-edit
+                   (dflet ((end-kbd-macro (x y) (exit-recursive-edit)) 
                            (kmacro-call-repeat-key nil))
                      (recursive-edit))
-                   ;; now we can end the macro
-                   (end-kbd-macro nil #'kmacro-loop-setup-function)
+                   (end-kbd-macro nil #'kmacro-loop-setup-function) ;stop recording macro
                    (if (y-or-n-p "Save as named macro?")
                        ;; ignore empty macros, prompt for a name for others
                        (if (or (not last-kbd-macro)
                                (and last-kbd-macro (= (length last-kbd-macro) 0)))
                            (message "Ignore empty macro")
-                         (call-interactively 'kmacro-name-last-macro)))
+                         (setq name (read-string "Name for last kbd macro: "))
+                         (while (intern-soft name)
+                           (setq name (read-string "Symbol already used! Choose another name: ")))
+                         (setq macro (intern name))
+                         (kmacro-name-last-macro macro))
+                     (setq macro last-kbd-macro))
                    ;; pop the calling macro back
                    (kmacro-pop-ring1)
                    ;; put last-macro back
-                   (nconc kmacro-ring last-macro)))
-                ((eq val 'condition)
+                   (nconc kmacro-ring last-macro)
+                   macro))))
+          (cond ((eq val 'quit) (setq quit-flag t)) 
+                ((eq val 'continue) nil)
+                ((eq val 'edit) (funcall editfunc))
+                ((eq val 'branch)
                  (let* ((condition (read-from-minibuffer "Condition: "))
-                        (action "(message \"hi\")")
+                        (action (kbd-macro-decision-menu))
+                        (actioncode
+                         (cond ((eq val 'quit) "t")
+                               ((eq val 'continue)
+                                (setq condition nil)
+                                "t")
+                               ((eq val 'edit)
+                                (let ((macro (funcall editfunc)))
+                                  (if (symbolp macro)
+                                      (concat "(funcall '" (symbol-name macro) ")")
+                                    "(execute-kbd-macro " (prin1-to-string macro) ")")))
+                               ((eq val 'branch) "(kbd-macro-decision-menu)")
+                               ((symbolp action) "(funcall '" (symbol-name action) ")")))
                         (pre (subseq calling-kbd-macro 0 executing-kbd-macro-index))
                         (post (subseq calling-kbd-macro executing-kbd-macro-index))
                         (condcode (concatenate 'vector (kbd "M-:")
-                                               "(if " condition action
+                                               "(if " condition actioncode
                                                "(execute-kbd-macro " (prin1-to-string post)
                                                "))")))
-                   (setq last-kbd-macro (concatenate 'vector pre "" condcode))))))))))
+                   (setq last-kbd-macro (concatenate 'vector pre "" condcode))))
+                ((symbolp val) (funcall val))))))))
 
-(defun kbd-macro-decision-menu nil
+(defun* kbd-macro-decision-menu (&optional withcond)
   "Prompt the user for a kbd macro using a keyboard menu."
   (let* ((kmacros (cl-loop for elt being the symbols
                            if (and (fboundp elt)
@@ -157,9 +174,9 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                            collect elt))
          (prompt (concat "C-g : Quit
 SPC : Continue
-RET : Recursive edit (C-M-c to finish)
-?   : Add conditional branch
-"
+RET : Recursive edit (C-M-c to finish)\n"
+                         (if withcond "?   : Add conditional branch\n"
+                           "? : Decision point\n")
                          (loop for i from 0 to (1- (length kmacros))
                                for kmacro = (nth i kmacros)
                                concat (format "%c   : %s\n" (+ 97 i) kmacro))))
@@ -167,10 +184,10 @@ RET : Recursive edit (C-M-c to finish)
     (cond ((= key 32) 'continue)
           ((= key 13) 'edit)
           ((= key 14) 'new)
-          ((= key 63) 'condition)
+          ((= key 63) 'branch)
           ((and (> key 96)
                 (< key (+ 97 (length kmacros))))
-           (symbol-function (nth (- key 97) kmacros)))
+           (nth (- key 97) kmacros))
           (t 'quit))))
 
 (provide 'kmacro-query-extra)
