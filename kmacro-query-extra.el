@@ -126,7 +126,7 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                        (if (or (not last-kbd-macro)
                                (and last-kbd-macro (= (length last-kbd-macro) 0)))
                            (message "Ignore empty macro")
-                         (setq name (read-string "Name for last kbd macro: "))
+                         (setq name (read-string "Name for last kbd macro: " "kbd-macro-"))
                          (while (intern-soft name)
                            (setq name (read-string "Symbol already used! Choose another name: ")))
                          (setq macro (intern name))
