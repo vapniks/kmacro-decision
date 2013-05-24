@@ -171,13 +171,14 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                                        (vectorp (symbol-function elt))
                                        (get elt 'kmacro)))
                            collect elt))
+         (nmacros (1- (length kmacros)))
          (prompt (concat "C-g : Quit
 SPC : Continue
 RET : Recursive edit (C-M-c to finish)\n"
                          (if withcond "?   : Add conditional branch\n"
                            "? : Decision point\n")
-                         (loop for i from 0 to (1- (length kmacros))
-                               for kmacro = (nth i kmacros)
+                         (loop for i from 0 to nmacros
+                               for kmacro = (nth (- nmacros i) kmacros)
                                concat (format "%c   : %s\n" (+ 97 i) kmacro))))
          (key (read-key prompt)))
     (cond ((= key 32) 'continue)
