@@ -115,6 +115,7 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                (lambda nil
                  ;; Need to ensure final macro in kmacro-ring is replaced at the end
                  (let ((last-macro (copy-list (last kmacro-ring)))
+                       (usednames ??)
                        macro name)
                    (kmacro-start-macro nil) ;start recording macro
                    ;; If end-kbd-macro is called just quit recursive-edit
@@ -147,14 +148,13 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                  (let* ((condition (read-from-minibuffer "Condition: "))
                         (action (kbd-macro-decision-menu t))
                         (actioncode
-                         (cond ((eq action 'quit) "t")
-                               ((eq action 'continue)
-                                (setq condition "nil")
-                                "t")
+                         (cond ((eq action 'quit) "(keyboard-quit)")
+                               ((eq action 'continue) "t")
                                ((eq action 'edit)
-                                "(execute-kbd-macro " (prin1-to-string (funcall editfunc)) ")")
-                               ((eq action 'branch) "(kbd-macro-decision-menu)")
-                               ((symbolp action) "(funcall '" (symbol-name action) ")")))
+                                "(execute-kbd-macro "
+                                (prin1-to-string (funcall editfunc)) ") (keyboard-quit)")
+                               ((symbolp action)
+                                (concat "(funcall '" (symbol-name action) ") (keyboard-quit)"))))
                         (pre (subseq calling-kbd-macro 0 executing-kbd-macro-index))
                         (post (subseq calling-kbd-macro executing-kbd-macro-index))
                         (condcode (concatenate 'vector (kbd "M-:")
@@ -162,6 +162,15 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                                                "(t (kbd-macro-decision)))" post)))
                    (setq last-kbd-macro (concatenate 'vector pre "" condcode))))
                 ((symbolp val) (funcall val))))))))
+
+(defun kbd-macro-decision-named-macros nil
+  "Return list of all named macros."
+  (cl-loop for elt being the symbols
+           if (and (fboundp elt)
+                   (or (stringp (symbol-function elt))
+                       (vectorp (symbol-function elt))
+                       (get elt 'kmacro)))
+           collect elt))
 
 (defun* kbd-macro-decision-menu (&optional withcond)
   "Prompt the user for a kbd macro using a keyboard menu."
