@@ -110,7 +110,7 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                (eq (aref calling-kbd-macro executing-kbd-macro-index) 7))
           (setq executing-kbd-macro-index (1+ executing-kbd-macro-index))
         ;; otherwise prompt the user for a choice
-        (let ((val (kbd-macro-decision-menu t))
+        (let ((val (kbd-macro-decision-menu))
               (editfunc ;; Function for creating and returning a macro
                (lambda nil
                  ;; Need to ensure final macro in kmacro-ring is replaced at the end
@@ -140,12 +140,12 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                    (if last-macro
                        (nconc kmacro-ring last-macro))
                    macro))))
-          (cond ((eq val 'quit) (setq quit-flag t)) 
+          (cond ((eq val 'quit) (setq quit-flag t))
                 ((eq val 'continue) nil)
                 ((eq val 'edit) (funcall editfunc))
                 ((eq val 'branch)
                  (let* ((condition (read-from-minibuffer "Condition: "))
-                        (action (kbd-macro-decision-menu))
+                        (action (kbd-macro-decision-menu t))
                         (actioncode
                          (cond ((eq action 'quit) "t")
                                ((eq action 'continue)
@@ -158,8 +158,8 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                         (pre (subseq calling-kbd-macro 0 executing-kbd-macro-index))
                         (post (subseq calling-kbd-macro executing-kbd-macro-index))
                         (condcode (concatenate 'vector (kbd "M-:")
-                                               "(if " condition " " actioncode " "
-                                               "(kbd-macro-decision))" post)))
+                                               "(cond (" condition " " actioncode ") "
+                                               "(t (kbd-macro-decision)))" post)))
                    (setq last-kbd-macro (concatenate 'vector pre "" condcode))))
                 ((symbolp val) (funcall val))))))))
 
@@ -172,11 +172,14 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                                        (get elt 'kmacro)))
                            collect elt))
          (nmacros (1- (length kmacros)))
-         (prompt (concat "C-g : Quit
-SPC : Continue
+         (prompt (concat "Choose action to perform"
+                         (if withcond " when condition is non-nil")
+                         "
+
+C-g : Quit macro
+SPC : Continue executing macro
 RET : Recursive edit (C-M-c to finish)\n"
-                         (if withcond "?   : Add conditional branch\n"
-                           "? : Decision point\n")
+                         (unless withcond "?   : Add conditional branch\n")
                          (loop for i from 0 to nmacros
                                for kmacro = (nth (- nmacros i) kmacros)
                                concat (format "%c   : %s\n" (+ 97 i) kmacro))))
@@ -187,7 +190,7 @@ RET : Recursive edit (C-M-c to finish)\n"
           ((= key 63) 'branch)
           ((and (> key 96)
                 (< key (+ 97 (length kmacros))))
-           (nth (- key 97) kmacros))
+           (nth (- nmacros (- key 97)) kmacros))
           (t 'quit))))
 
 (defalias 'kbd-macro-query 'kbd-macro-decision
