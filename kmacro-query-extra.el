@@ -114,33 +114,34 @@ and `kmacro-name-last-macro' (C-x C-k n)."
               (editfunc ;; Function for creating and returning a macro
                (lambda nil
                  ;; Need to ensure final macro in kmacro-ring is replaced at the end
-                 (let ((last-macro (copy-list (last kmacro-ring)))
-                       (usednames ??)
-                       macro name)
+                 (let* ((last-macro (copy-list (last kmacro-ring)))
+                        (usednames (mapcar 'symbol-name (kbd-macro-decision-named-macros)))
+                        (prefix "kbd-macro-")
+                        (num 1))
+                   (while (member (concat prefix (number-to-string num)) usednames)
+                     (setq num (1+ num)))
+                   (setq name (concat prefix (number-to-string num)))
                    (kmacro-start-macro nil) ;start recording macro
                    ;; If end-kbd-macro is called just quit recursive-edit
-                   (dflet ((end-kbd-macro (x y) (exit-recursive-edit)) 
+                   (dflet ((end-kbd-macro (x y) (exit-recursive-edit))
                            (kmacro-call-repeat-key nil))
                      (recursive-edit))
                    (end-kbd-macro nil #'kmacro-loop-setup-function) ;stop recording macro
                    (if (or (not last-kbd-macro)
                            (and last-kbd-macro (= (length last-kbd-macro) 0)))
                        (message "Ignore empty macro")
-                     (unless (not (y-or-n-p "Save as named macro?"))
-                       ;; ignore empty macros, prompt for a name for others
-                       (setq name (read-string "Name for last kbd macro: "
-                                               "kbd-macro-"))
-                       (while (intern-soft name)
-                         (setq name (read-string "Symbol already used! Choose another name: "
-                                                 "kbd-macro-")))
-                       (kmacro-name-last-macro (intern name))))
-                   (setq macro last-kbd-macro)
+                     (setq name (read-string "Name for last kbd macro: "
+                                             name))
+                     (while (intern-soft name)
+                       (setq name (read-string "Symbol already used! Choose another name: "
+                                               "kbd-macro-")))
+                     (kmacro-name-last-macro (intern name)))
                    ;; pop the calling macro back
                    (kmacro-pop-ring1)
                    ;; put last-macro back (if there was one)
                    (if last-macro
                        (nconc kmacro-ring last-macro))
-                   macro))))
+                   (intern name)))))
           (cond ((eq val 'quit) (setq quit-flag t))
                 ((eq val 'continue) nil)
                 ((eq val 'edit) (funcall editfunc))
@@ -151,16 +152,20 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                          (cond ((eq action 'quit) "(keyboard-quit)")
                                ((eq action 'continue) "t")
                                ((eq action 'edit)
-                                "(execute-kbd-macro "
-                                (prin1-to-string (funcall editfunc)) ") (keyboard-quit)")
+                                (concat "(funcall '" (prin1-to-string (funcall editfunc)) ") (keyboard-quit)"))
                                ((symbolp action)
                                 (concat "(funcall '" (symbol-name action) ") (keyboard-quit)"))))
                         (pre (subseq calling-kbd-macro 0 executing-kbd-macro-index))
+                        (condexists (and (> (length pre) 33)
+                                         (equal (string-to-vector "(t (kbd-macro-decision)))")
+                                                (substring pre -26))))
                         (post (subseq calling-kbd-macro executing-kbd-macro-index))
-                        (condcode (concatenate 'vector (kbd "M-:")
-                                               "(cond (" condition " " actioncode ") "
-                                               "(t (kbd-macro-decision)))" post)))
-                   (setq last-kbd-macro (concatenate 'vector pre "" condcode))))
+                        (condcode
+                         (concatenate 'vector (unless condexists (concatenate 'vector (kbd "M-:") "(cond "))
+                                      "(" condition " " actioncode ") "
+                                      "(t (kbd-macro-decision)))")))
+                   (setq pre (if condexists (substring pre 0 -26) (concat pre "")))
+                   (setq last-kbd-macro (concatenate 'vector pre condcode post))))
                 ((symbolp val) (funcall val))))))))
 
 (defun kbd-macro-decision-named-macros nil
