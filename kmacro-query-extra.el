@@ -80,8 +80,6 @@
 ;;; TODO
 ;;
 ;; Finish `kbd-macro-decision-menu', and integrate with `one-key-read-list' if available.
-;; Create `kbd-macro-condition' function for inserting a cond form in a kbd macro
-;; (need to think of good user interface for this).
 ;;
 
 ;;; Require
