@@ -1,7 +1,7 @@
-;;; kmacro-query-extra.el --- Extra query functions for emacs keyboard macros
+;;; kmacro-decision.el --- Add conditional branching to keyboard macros
 
-;; Filename: kmacro-query-extra.el
-;; Description: Extra query functions for emacs keyboard macros
+;; Filename: kmacro-decision.el
+;; Description: Add conditional branching to keyboard macros
 ;; Author: Joe Bloggs <vapniks@yahoo.com>
 ;; Maintainer: Joe Bloggs <vapniks@yahoo.com>
 ;; Copyleft (Ↄ) 2013, Joe Bloggs, all rites reversed.
@@ -9,7 +9,7 @@
 ;; Version: 0.1
 ;; Last-Updated: 2013-05-15 05:04:08
 ;;           By: Joe Bloggs
-;; URL: https://github.com/vapniks/kmacro-query-extra
+;; URL: https://github.com/vapniks/kmacro-decision
 ;; Keywords: convenience
 ;; Compatibility: GNU Emacs 24.3.1
 ;; Package-Requires: ((el-x "1.0"))
@@ -46,7 +46,7 @@
 
 ;;; Installation:
 ;;
-;; Put kmacro-query-extra.el in a directory in your load-path, e.g. ~/.emacs.d/
+;; Put kmacro-decision.el in a directory in your load-path, e.g. ~/.emacs.d/
 ;; You can add a directory to your load-path with the following line in ~/.emacs
 ;; (add-to-list 'load-path (expand-file-name "~/elisp"))
 ;; where ~/elisp is the directory you want to add 
@@ -54,7 +54,7 @@
 ;;
 ;; Add the following to your ~/.emacs startup file.
 ;;
-;; (require 'kmacro-query-extra)
+;; (require 'kmacro-decision)
 
 ;;; Customize:
 ;;
@@ -79,7 +79,7 @@
 
 ;;; TODO
 ;;
-;; Finish `kbd-macro-decision-menu', and integrate with `one-key-read-list' if available.
+;; Finish `kmacro-decision-menu', and integrate with `one-key-read-list' if available.
 ;;
 
 ;;; Require
@@ -87,7 +87,7 @@
 
 ;;; Code:
 
-(defun kbd-macro-decision nil
+(defun kmacro-decision nil
   "Query user for another kbd macro to execute during execution of current kbd macro.
 If called while defining a kbd macro then a query point will be inserted into the
 kbd macro which will ask the user for a named kbd macro to execute at that point.
@@ -108,12 +108,12 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                (eq (aref calling-kbd-macro executing-kbd-macro-index) 7))
           (setq executing-kbd-macro-index (1+ executing-kbd-macro-index))
         ;; otherwise prompt the user for a choice
-        (let ((val (kbd-macro-decision-menu))
+        (let ((val (kmacro-decision-menu))
               (editfunc ;; Function for creating and returning a macro
                (lambda nil
                  ;; Need to ensure final macro in kmacro-ring is replaced at the end
                  (let* ((last-macro (copy-list (last kmacro-ring)))
-                        (usednames (mapcar 'symbol-name (kbd-macro-decision-named-macros)))
+                        (usednames (mapcar 'symbol-name (kmacro-decision-named-macros)))
                         (prefix "kbd-macro-")
                         (num 1))
                    (while (member (concat prefix (number-to-string num)) usednames)
@@ -145,7 +145,7 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                 ((eq val 'edit) (funcall editfunc))
                 ((eq val 'branch)
                  (let* ((condition (read-from-minibuffer "Condition: "))
-                        (action (kbd-macro-decision-menu t))
+                        (action (kmacro-decision-menu t))
                         (actioncode
                          (cond ((eq action 'quit) "(keyboard-quit)")
                                ((eq action 'continue) "t")
@@ -155,18 +155,18 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                                 (concat "(funcall '" (symbol-name action) ") (keyboard-quit)"))))
                         (pre (subseq calling-kbd-macro 0 executing-kbd-macro-index))
                         (condexists (and (> (length pre) 33)
-                                         (equal (string-to-vector "(t (kbd-macro-decision)))")
+                                         (equal (string-to-vector "(t (kmacro-decision)))")
                                                 (substring pre -26))))
                         (post (subseq calling-kbd-macro executing-kbd-macro-index))
                         (condcode
                          (concatenate 'vector (unless condexists (concatenate 'vector (kbd "M-:") "(cond "))
                                       "(" condition " " actioncode ") "
-                                      "(t (kbd-macro-decision)))")))
+                                      "(t (kmacro-decision)))")))
                    (setq pre (if condexists (substring pre 0 -26) (concat pre "")))
                    (setq last-kbd-macro (concatenate 'vector pre condcode post))))
                 ((symbolp val) (funcall val))))))))
 
-(defun kbd-macro-decision-named-macros nil
+(defun kmacro-decision-named-macros nil
   "Return list of all named macros."
   (cl-loop for elt being the symbols
            if (and (fboundp elt)
@@ -175,7 +175,7 @@ and `kmacro-name-last-macro' (C-x C-k n)."
                        (get elt 'kmacro)))
            collect elt))
 
-(defun* kbd-macro-decision-menu (&optional withcond)
+(defun* kmacro-decision-menu (&optional withcond)
   "Prompt the user for a kbd macro using a keyboard menu."
   (let* ((kmacros (cl-loop for elt being the symbols
                            if (and (fboundp elt)
@@ -205,12 +205,12 @@ RET : Recursive edit (C-M-c to finish)\n"
            (nth (- nmacros (- key 97)) kmacros))
           (t 'quit))))
 
-(defalias 'kbd-macro-query 'kbd-macro-decision
-  (documentation 'kbd-macro-decision))
+(defalias 'kbd-macro-query 'kmacro-decision
+  (documentation 'kmacro-decision))
 
-(provide 'kmacro-query-extra)
+(provide 'kmacro-decision)
 
 ;; (magit-push)
-;; (yaoddmuse-post "EmacsWiki" "kmacro-query-extra.el" (buffer-name) (buffer-string) "update")
+;; (yaoddmuse-post "EmacsWiki" "kmacro-decision.el" (buffer-name) (buffer-string) "update")
 
-;;; kmacro-query-extra.el ends here
+;;; kmacro-decision.el ends here
