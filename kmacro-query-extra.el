@@ -41,6 +41,27 @@
 ;;
 ;; Bitcoin donations gratefully accepted: 1D6meUBuHXLxQNiBfaNKYRfWVVTTYU2okM
 ;;
+;; This library changes keyboard macro query points into decision points or conditional
+;; branches. A query point can be created by typing C-x q or entering the `kbd-macro-query'
+;; command when entering a keyboard macro.
+;; When the macro is replayed and the query point is reached the user will be prompted with
+;; options to either quit the macro, continue the rest of the macro, enter recursive edit and
+;; store a new macro, add a conditional branch (explained next), or replay a previously saved
+;; (named) macro.
+;; If the user chooses to add a conditional branch they will be prompted for a condition form,
+;; and an action to perform if that condition evaluates to non-nil. The action can be to quit the macro,
+;; continue the macro, create a new macro for that condition, or replay a previously saved macro.
+;; If the condition evaluates to non-nil the next time the macro is replayed then the corresponding
+;; action will be performed. If several conditions-action pairs are created for a given query point
+;; then the conditions will be evaluated in the order in which they where created until one of them evaluates
+;; to non-nil. If they all evaluate to nil then the user will be prompted as before to either quit, continue,
+;; create/replay a macro, or add another condition-action pair.
+
+;; By adding query points to the end of each newly created macro, macro decision trees can be built up
+;; and complex automated operations performed.
+
+
+
 ;;;;
 
 
@@ -56,15 +77,6 @@
 ;;
 ;; (require 'kmacro-decision)
 
-;;; Customize:
-;;
-;; To automatically insert descriptions of customizable variables defined in this buffer
-;; place point at the beginning of the next line and do: M-x auto-document
-
-;;
-;; All of the above can customized by:
-;;      M-x customize-group RET kmacro-query-extra RET
-;;
 
 ;;; Change log:
 ;;	
