@@ -47,7 +47,7 @@
 ;; When the macro is replayed and the query point is reached the user will be prompted with
 ;; options to either quit the macro, continue the rest of the macro, enter recursive edit and
 ;; store a new macro, add a conditional branch (explained next), or replay a previously saved
-;; (named) macro.
+;; (named) macro. The user may also recenter the window by pressing C-l.
 ;; If the user chooses to add a conditional branch they will be prompted for a condition form,
 ;; and an action to perform if that condition evaluates to non-nil. The action can be to quit the macro,
 ;; continue the macro, create a new macro for that condition, or replay a previously saved macro.
@@ -60,7 +60,8 @@
 ;; By adding query points to the end of each newly created macro, macro decision trees can be built up
 ;; and complex automated operations performed.
 
-
+;; Note: you can also use `kbd-macro-query' to choose a named macro to replay when not recording a macro
+;; (in case you forgot the name).
 
 ;;;;
 
