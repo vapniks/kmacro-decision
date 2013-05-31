@@ -185,7 +185,15 @@ is reached."
                          (cond ((eq action 'quit) "(keyboard-quit)")
                                ((eq action 'continue) "t")
                                ((eq action 'edit)
-                                (concat "(funcall '" (prin1-to-string (funcall editfunc)) ") (keyboard-quit)"))
+                                (concat "(funcall '"
+                                        (prin1-to-string (funcall editfunc))
+                                        ") (keyboard-quit)"))
+                               ((eq action 'form)
+                                (read-from-minibuffer
+                                 "Elisp: " nil read-expression-map nil
+                                 'read-expression-history))
+                               ((eq action 'command)
+                                (concat  "(call-interactively '" (symbol-name (read-command "Command : ")) ")"))
                                ((symbolp action)
                                 (concat "(funcall '" (symbol-name action) ") (keyboard-quit)"))))
                         (pre (subseq calling-kbd-macro 0 executing-kbd-macro-index))
@@ -194,7 +202,9 @@ is reached."
                                                 (subseq pre -26))))
                         (post (subseq calling-kbd-macro executing-kbd-macro-index))
                         (condcode
-                         (concatenate 'vector (unless condexists (concatenate 'vector (kbd "M-:") "(cond "))
+                         (concatenate 'vector
+                                      (unless condexists
+                                        (concatenate 'vector (kbd "M-:") "(cond "))
                                       "(" condition " " actioncode ") "
                                       "(t (kmacro-decision)))")))
                    (setq pre (if condexists (subseq pre 0 -26) (concatenate 'vector pre "")))
@@ -233,13 +243,16 @@ C-g : Quit macro
 C-l : Recenter window about cursor
 SPC : Continue executing macro
 RET : Recursive edit (C-M-c to finish)\n"
-                         (unless withcond "?   : Add conditional branch\n")
+                         (if withcond "M-: : Eval elisp\nM-x : Execute command\n"
+                           "?   : Add conditional branch\n")
                          (loop for i from 0 to nmacros
                                for kmacro = (nth (- nmacros i) kmacros)
                                concat (format "%c   : %s\n" (+ 97 i) kmacro))))
          (maxkey (+ 97 (length kmacros)))
          (key 0))
-    (while (not (or (member key '(7 13 14 32 63))
+    (while (not (or (member key (list 7 13 14 32 63
+                                      (elt (kbd "M-:") 0)
+                                      (elt (kbd "M-x") 0)))
                     (and (> key 96) (< key maxkey))))
       (if (= key 12) (recenter-top-bottom))
       (setq key (read-key prompt)))
@@ -247,6 +260,8 @@ RET : Recursive edit (C-M-c to finish)\n"
           ((= key 14) 'new)
           ((= key 32) 'continue)
           ((= key 63) 'branch)
+          ((= key (elt (kbd "M-:") 0)) 'form)
+          ((= key (elt (kbd "M-x") 0)) 'command)
           ((and (> key 96)
                 (< key (+ 97 (length kmacros))))
            (nth (- nmacros (- key 97)) kmacros))
