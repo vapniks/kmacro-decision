@@ -61,10 +61,17 @@
 ;; and complex automated operations performed.
 
 ;; Note: you can also use `kbd-macro-query' to choose a named macro to replay when not recording a macro
-;; (in case you forgot the name).
+;; (in case you forgot the name). Also note that when prompted for a condition you can scroll forward through
+;; the input history using M-n to get conditions for searching for strings/regexps. You can add to this list
+;; by customizing `kmacro-decision-conditions'.
 
-;;;;
-
+;;; Customizable Options:
+;;
+;; Below are customizable option list:
+;;
+;;  `kmacro-decision-conditions'
+;;    A list of conditions to be made available in the history list in calls to `kmacro-decision'
+;;    default = (quote ("(search-forward \"??\" nil nil)" "(re-search-forward \"??\" nil nil)"))
 
 ;;; Installation:
 ;;
@@ -99,6 +106,12 @@
 (require 'el-x)
 
 ;;; Code:
+
+(defcustom kmacro-decision-conditions '("(search-forward \"??\" nil nil)"
+                                        "(re-search-forward \"??\" nil nil)")
+  "A list of conditions to be made available in the history list in calls to `kmacro-decision'"
+  :type '(repeat string)
+  :group 'kmacro)
 
 ;;;###autoload
 (defun kmacro-decision nil
@@ -164,7 +177,9 @@ is reached."
                 ((eq val 'continue) nil)
                 ((eq val 'edit) (funcall editfunc))
                 ((eq val 'branch)
-                 (let* ((condition (read-from-minibuffer "Condition: "))
+                 (let* ((condition (read-from-minibuffer
+                                    "Condition: " nil nil nil nil
+                                    kmacro-decision-conditions))
                         (action (kmacro-decision-menu t))
                         (actioncode
                          (cond ((eq action 'quit) "(keyboard-quit)")
