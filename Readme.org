@@ -39,7 +39,9 @@ By adding query points to the end of each newly created macro, macro decision tr
 and complex automated operations performed.
 
 Note: you can also use `kbd-macro-query' to choose a named macro to replay when not recording a macro
-(in case you forgot the name).
+(in case you forgot the name). Also note that when prompted for a condition you can scroll forward through
+the input history using M-n to get conditions for searching for strings/regexps. You can add to this list
+by customizing `kmacro-decision-conditions'.
 
 * Installation
 
