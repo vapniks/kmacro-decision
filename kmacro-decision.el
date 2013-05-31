@@ -6,7 +6,7 @@
 ;; Maintainer: Joe Bloggs <vapniks@yahoo.com>
 ;; Copyleft (Ↄ) 2013, Joe Bloggs, all rites reversed.
 ;; Created: 2013-05-15 05:04:08
-;; Version: 0.4
+;; Version: 0.5
 ;; Last-Updated: 2013-05-15 05:04:08
 ;;           By: Joe Bloggs
 ;; URL: https://github.com/vapniks/kmacro-decision
@@ -50,7 +50,8 @@
 ;; (named) macro. The user may also recenter the window by pressing C-l.
 ;; If the user chooses to add a conditional branch they will be prompted for a condition form,
 ;; and an action to perform if that condition evaluates to non-nil. The action can be to quit the macro,
-;; continue the macro, create a new macro for that condition, or replay a previously saved macro.
+;; continue the macro, create a new macro for that condition, execute an elisp form or command, or replay
+;; a previously saved macro.
 ;; If the condition evaluates to non-nil the next time the macro is replayed then the corresponding
 ;; action will be performed. If several conditions-action pairs are created for a given query point
 ;; then the conditions will be evaluated in the order in which they where created until one of them evaluates
