@@ -183,20 +183,23 @@ is reached."
                                     kmacro-decision-conditions))
                         (action (kmacro-decision-menu t))
                         (actioncode
-                         (cond ((eq action 'quit) "(keyboard-quit)")
-                               ((eq action 'continue) "t")
-                               ((eq action 'edit)
-                                (concat "(funcall '"
-                                        (prin1-to-string (funcall editfunc))
-                                        ") (keyboard-quit)"))
-                               ((eq action 'form)
-                                (read-from-minibuffer
-                                 "Elisp: " nil read-expression-map nil
-                                 'read-expression-history))
-                               ((eq action 'command)
-                                (concat  "(call-interactively '" (symbol-name (read-command "Command : ")) ")"))
-                               ((symbolp action)
-                                (concat "(funcall '" (symbol-name action) ") (keyboard-quit)"))))
+                         (concat (cond ((eq action 'quit) "(keyboard-quit)")
+                                       ((eq action 'continue) "t")
+                                       ((eq action 'edit)
+                                        (concat "(funcall '"
+                                                (prin1-to-string (funcall editfunc))
+                                                ")"))
+                                       ((eq action 'form)
+                                        (read-from-minibuffer
+                                         "Elisp: " nil read-expression-map nil
+                                         'read-expression-history))
+                                       ((eq action 'command)
+                                        (concat  "(call-interactively '" (symbol-name (read-command "Command : ")) ")"))
+                                       ((symbolp action)
+                                        (concat "(funcall '" (symbol-name action) ")")))
+                                 (unless (or (member action '(quit continue))
+                                             (y-or-n-p "Continue with macro after performing this action?"))
+                                   " (keyboard-quit)")))
                         (pre (subseq calling-kbd-macro 0 executing-kbd-macro-index))
                         (condexists (and (> (length pre) 33)
                                          (equal (string-to-vector "(t (kmacro-decision)))")
