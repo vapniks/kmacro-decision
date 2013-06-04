@@ -241,12 +241,7 @@ If WITHCOND is non-nil then prompt for an action to perform for the previously e
 condition.
 This function returns one of the following symbols 'continue, 'edit, 'new, 'branch, 'quit
 or a symbol corresponding to a named keyboard macro."
-  (let* ((kmacros (cl-loop for elt being the symbols
-                           if (and (fboundp elt)
-                                   (or (stringp (symbol-function elt))
-                                       (vectorp (symbol-function elt))
-                                       (get elt 'kmacro)))
-                           collect elt))
+  (let* ((kmacros (kmacro-decision-named-macros))
          (nmacros (1- (length kmacros)))
          (prompt (concat "Choose action to perform"
                          (if withcond " when condition is non-nil")
