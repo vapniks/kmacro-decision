@@ -225,7 +225,8 @@ Enter a global keybinding for this command: ")
                                       "(t (kmacro-decision)))")))
                    (setq pre (if condexists (subseq pre 0 -26) (concatenate 'vector pre "")))
                    (setq last-kbd-macro (concatenate 'vector pre condcode post))))
-                ((symbolp val) (funcall val))))))))
+                ((and val (symbolp val)) (funcall val))
+                (t (message nil))))))))
 
 (defun kmacro-decision-named-macros nil
   "Return list of all named keyboard macros."
