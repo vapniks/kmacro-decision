@@ -192,25 +192,26 @@ Enter a global keybinding for this command: ")
                         (revertmacro " (setq executing-kbd-macro calling-kbd-macro) (message nil))")
                         (actioncode
                          (concat
-                          (cond ((eq action 'quit) "(keyboard-quit)")
-                                ((eq action 'continue) "t")
-                                ((eq action 'edit)
-                                 (concat resetmacro "(funcall '"
-                                         (prin1-to-string (funcall editfunc))
-                                         ")" revertmacro))
-                                ((eq action 'useredit 111))
-                                ((eq action 'form)
-                                 (concat resetmacro 
-                                         (read-from-minibuffer
-                                          "Elisp: " nil read-expression-map nil
-                                          'read-expression-history)
-                                         revertmacro))
-                                ((eq action 'command)
-                                 (concat resetmacro "(call-interactively '"
-                                         (symbol-name (read-command "Command : ")) ")"
-                                         revertmacro))
-                                ((symbolp action)
-                                 (concat resetmacro "(funcall '" (symbol-name action) ")" revertmacro)))
+                          (case action
+                            (quit "(keyboard-quit)")
+                            (continue "t")
+                            (edit
+                             (concat resetmacro "(funcall '"
+                                     (prin1-to-string (funcall editfunc))
+                                     ")" revertmacro))
+                            (useredit 111)
+                            (form
+                             (concat resetmacro 
+                                     (read-from-minibuffer
+                                      "Elisp: " nil read-expression-map nil
+                                      'read-expression-history)
+                                     revertmacro))
+                            (command
+                             (concat resetmacro "(call-interactively '"
+                                     (symbol-name (read-command "Command : ")) ")"
+                                     revertmacro))
+                            (t (if (symbolp action)
+                                   (concat resetmacro "(funcall '" (symbol-name action) ")" revertmacro))))
                           (unless (or (member action '(quit continue))
                                       (y-or-n-p "Continue with macro after performing this action?"))
                             " (keyboard-quit)")))
