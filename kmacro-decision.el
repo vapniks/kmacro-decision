@@ -120,8 +120,7 @@
 
 (defun kmacro-decision-recursive-edit nil
   "Enter recursive edit, binding `end-kbd-macro' to `exit-recursive-edit' and setting `kmacro-call-repeat-key' to nil.
-
-"
+Also temporarily disable any currently running keyboard macro."
   (let ((exitkey (or (car (where-is-internal 'exit-recursive-edit))
                      (jb-untilnext
                       (read-key-sequence
@@ -129,7 +128,8 @@
 
 Enter a global keybinding for this command: ")
                       (read-key-sequence "That key is already used! Try another: ")
-                      (lambda (x) (not (key-binding x)))))))
+                      (lambda (x) (not (key-binding x))))))
+        executing-kbd-macro)
     (global-set-key exitkey 'exit-recursive-edit)
     (message "Press %s to finish" exitkey)
     (dflet ((end-kbd-macro (x y) (exit-recursive-edit)))
@@ -185,7 +185,7 @@ is reached."
                        (nconc kmacro-ring last-macro))
                    symbol))))
           (cond ((eq val 'quit) (setq quit-flag t))
-                ((eq val 'continue) nil)
+                ((eq val 'continue) (message nil))
                 ((eq val 'edit) (funcall editfunc))
                 ((eq val 'branch)
                  (let* ((condition (read-from-minibuffer
@@ -290,9 +290,13 @@ or a symbol corresponding to a named keyboard macro."
          (keys (append (list (kbd "C-l") (kbd "SPC") (kbd "RET")) (if withcond '("r" "e" "x") '("?"))))
          (forms (append '((recenter-top-bottom) 'continue 'edit)
                         (if withcond '('useredit 'form 'command) '('branch))
-                        kmacros)))
-    (jb-read-key-menu prompts forms (concat "Choose action to perform"
-                                            (if t " when condition is non-nil:\n" ":\n")) nil keys)))
+                        kmacros))
+         retval)
+    (while (not (setq retval 
+                      (jb-read-key-menu prompts forms
+                                        (concat "Choose action to perform"
+                                                (if t " when condition is non-nil:\n" ":\n")) nil keys))) t)
+    retval))
 
 ;;;###autoload
 (defalias 'kbd-macro-query 'kmacro-decision
