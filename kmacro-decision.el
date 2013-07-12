@@ -165,9 +165,9 @@ Enter a global keybinding for this command: ")
                    (kmacro-start-macro nil) ;start recording macro
                    ;; If end-kbd-macro is called just quit recursive-edit
                    (message "Press %s to finish" exitkey)
-                   (dflet ((end-kbd-macro (x y) (exit-recursive-edit))
-                           (kmacro-call-repeat-key nil))
-                     (recursive-edit))
+                   (dflet ((end-kbd-macro (x y) (exit-recursive-edit)))
+                     (let ((kmacro-call-repeat-key nil))
+                       (recursive-edit)))
                    (end-kbd-macro nil #'kmacro-loop-setup-function) ;stop recording macro
                    (if (or (not last-kbd-macro)
                            (and last-kbd-macro (= (length last-kbd-macro) 0)))
@@ -199,7 +199,8 @@ Enter a global keybinding for this command: ")
                              (concat resetmacro "(funcall '"
                                      (prin1-to-string (funcall editfunc))
                                      ")" revertmacro))
-                            (useredit 111)
+                            (useredit (concat "(dflet ((end-kbd-macro (x y) (exit-recursive-edit)))
+(let ((kmacro-call-repeat-key nil)) (recursive-edit)))"))
                             (form
                              (concat resetmacro 
                                      (read-from-minibuffer
