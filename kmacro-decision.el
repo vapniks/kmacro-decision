@@ -169,23 +169,9 @@ is reached."
                (lambda nil
                  ;; Need to ensure final macro in kmacro-ring is replaced at the end
                  (let* ((last-macro (copy-list (last kmacro-ring)))
-                        (exitkey
-                         (or (car (where-is-internal 'exit-recursive-edit))
-                             (jb-untilnext
-                              (read-key-sequence
-                               "There is currently no keybinding for the `exit-recursive-edit' command!
-
-Enter a global keybinding for this command: ")
-                              (read-key-sequence "That key is already used! Try another: ")
-                              (lambda (x) (not (key-binding x))))))
                         symbol)
-                   (global-set-key exitkey 'exit-recursive-edit)
                    (kmacro-start-macro nil) ;start recording macro
-                   ;; If end-kbd-macro is called just quit recursive-edit
-                   (message "Press %s to finish" exitkey)
-                   (dflet ((end-kbd-macro (x y) (exit-recursive-edit)))
-                     (let ((kmacro-call-repeat-key nil))
-                       (recursive-edit)))
+                   (kmacro-decision-recursive-edit)
                    (end-kbd-macro nil #'kmacro-loop-setup-function) ;stop recording macro
                    (if (or (not last-kbd-macro)
                            (and last-kbd-macro (= (length last-kbd-macro) 0)))
@@ -213,12 +199,10 @@ Enter a global keybinding for this command: ")
                           (case action
                             (quit "(keyboard-quit)")
                             (continue "t")
-                            (edit
-                             (concat resetmacro "(funcall '"
-                                     (prin1-to-string (funcall editfunc))
-                                     ")" revertmacro))
-                            (useredit (concat "(dflet ((end-kbd-macro (x y) (exit-recursive-edit)))
-(let ((kmacro-call-repeat-key nil)) (recursive-edit)))"))
+                            (edit (aif (funcall editfunc)
+                                      (concat resetmacro "(funcall '"
+                                              (prin1-to-string it) ")" revertmacro)))
+                            (useredit "(kmacro-decision-recursive-edit)")
                             (form
                              (concat resetmacro 
                                      (read-from-minibuffer
