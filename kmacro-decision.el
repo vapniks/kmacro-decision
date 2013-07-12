@@ -118,6 +118,24 @@
   :type '(repeat string)
   :group 'kmacro)
 
+(defun kmacro-decision-recursive-edit nil
+  "Enter recursive edit, binding `end-kbd-macro' to `exit-recursive-edit' and setting `kmacro-call-repeat-key' to nil.
+
+"
+  (let ((exitkey (or (car (where-is-internal 'exit-recursive-edit))
+                     (jb-untilnext
+                      (read-key-sequence
+                       "There is currently no keybinding for the `exit-recursive-edit' command!
+
+Enter a global keybinding for this command: ")
+                      (read-key-sequence "That key is already used! Try another: ")
+                      (lambda (x) (not (key-binding x)))))))
+    (global-set-key exitkey 'exit-recursive-edit)
+    (message "Press %s to finish" exitkey)
+    (dflet ((end-kbd-macro (x y) (exit-recursive-edit)))
+      (let ((kmacro-call-repeat-key nil))
+        (recursive-edit)))))
+
 ;;;###autoload
 (defun kmacro-decision nil
   "Prompt for an action to perform, or conditional branch to add to a query point in a keyboard macro.
