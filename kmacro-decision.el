@@ -198,6 +198,7 @@ Enter a global keybinding for this command: ")
                                  (concat resetmacro "(funcall '"
                                          (prin1-to-string (funcall editfunc))
                                          ")" revertmacro))
+                                ((eq action 'useredit 111))
                                 ((eq action 'form)
                                  (concat resetmacro 
                                          (read-from-minibuffer
@@ -279,12 +280,12 @@ or a symbol corresponding to a named keyboard macro."
          (nmacros (1- (length kmacros)))
          (prompts (append (list "Recenter window about cursor"
                                 "Continue executing macro"
-                                "Recursive edit (C-M-c to finish)")
-                          (if withcond '("Eval elisp" "Execute command") '("Add conditional branch"))
+                                "Recursive edit now (C-M-c to finish)")
+                          (if withcond '("Recursive edit when called" "Eval elisp" "Execute command") '("Add conditional branch"))
                           (mapcar (lambda (k) (format "%s" k)) kmacros)))
-         (keys (append (list (kbd "C-l") (kbd "SPC") (kbd "RET")) (if withcond '("e" "x") '("?"))))
+         (keys (append (list (kbd "C-l") (kbd "SPC") (kbd "RET")) (if withcond '("r" "e" "x") '("?"))))
          (forms (append '((recenter-top-bottom) 'continue 'edit)
-                        (if withcond '('form 'command) '('branch))
+                        (if withcond '('useredit 'form 'command) '('branch))
                         kmacros)))
     (jb-read-key-menu prompts forms (concat "Choose action to perform"
                                             (if t " when condition is non-nil:\n" ":\n")) nil keys)))
