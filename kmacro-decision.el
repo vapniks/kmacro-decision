@@ -166,7 +166,7 @@ is reached."
         ;; otherwise prompt the user for a choice
         (let ((val (kmacro-decision-menu))
               (editfunc ;; Function for creating and returning a macro
-               (lambda nil
+               (lambda (save)
                  ;; Need to ensure final macro in kmacro-ring is replaced at the end
                  (let* ((last-macro (copy-list (last kmacro-ring)))
                         symbol)
@@ -177,7 +177,8 @@ is reached."
                            (and last-kbd-macro (= (length last-kbd-macro) 0)))
                        (message "Ignore empty macro")
                      ;; prompt the user to name the macro
-                     (setq symbol (call-interactively 'kmacro-decision-name-last-macro)))
+                     (if (or save (y-or-n-p "Save as named macro"))
+                         (setq symbol (call-interactively 'kmacro-decision-name-last-macro))))
                    ;; pop the calling macro back
                    (kmacro-pop-ring1)
                    ;; put last-macro back (if there was one)
@@ -186,7 +187,7 @@ is reached."
                    symbol))))
           (cond ((eq val 'quit) (setq quit-flag t))
                 ((eq val 'continue) (message nil))
-                ((eq val 'edit) (funcall editfunc))
+                ((eq val 'edit) (funcall editfunc nil))
                 ((eq val 'branch)
                  (let* ((condition (read-from-minibuffer
                                     "Condition: " nil nil nil nil
@@ -199,7 +200,7 @@ is reached."
                           (case action
                             (quit "(keyboard-quit)")
                             (continue "t")
-                            (edit (aif (funcall editfunc)
+                            (edit (aif (funcall editfunc t)
                                       (concat resetmacro "(funcall '"
                                               (prin1-to-string it) ")" revertmacro)))
                             (useredit "(kmacro-decision-recursive-edit)")
