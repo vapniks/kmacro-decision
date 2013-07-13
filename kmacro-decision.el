@@ -12,7 +12,7 @@
 ;; URL: https://github.com/vapniks/kmacro-decision
 ;; Keywords: convenience
 ;; Compatibility: GNU Emacs 24.3.1
-;; Package-Requires: ((el-x "1.0") (jb-misc-macros "0.1"))
+;; Package-Requires: ((el-x "1.0") (jb-misc-macros "0.2"))
 ;;
 ;; Features that might be required by this library:
 ;;
@@ -286,18 +286,18 @@ or a symbol corresponding to a named keyboard macro."
          (prompts (append (list "Recenter window about cursor"
                                 "Continue executing macro"
                                 "Recursive edit now (C-M-c to finish)")
-                          (if withcond '("Recursive edit when called" "Eval elisp" "Execute command") '("Add conditional branch"))
+                          (if withcond '("Recursive edit when called" "Eval elisp" "Execute command")
+                            '("Add conditional branch"))
                           (mapcar (lambda (k) (format "%s" k)) kmacros)))
-         (keys (append (list (kbd "C-l") (kbd "SPC") (kbd "RET")) (if withcond '("r" "e" "x") '("?"))))
+         (keys (append (list (kbd "C-l") (kbd "SPC") (kbd "RET"))
+                       (if withcond '("r" "e" "x") '("?"))))
          (forms (append '((recenter-top-bottom) 'continue 'edit)
                         (if withcond '('useredit 'form 'command) '('branch))
-                        kmacros))
-         retval)
-    (while (not (setq retval 
-                      (jb-read-key-menu prompts forms
+                        kmacros)))
+    (jb-untilnext nil (jb-read-key-menu prompts forms
                                         (concat "Choose action to perform"
-                                                (if t " when condition is non-nil:\n" ":\n")) nil keys))) t)
-    retval))
+                                                (if t " when condition is non-nil:\n" ":\n"))
+                                        nil keys) t)))
 
 ;;;###autoload
 (defalias 'kbd-macro-query 'kmacro-decision
