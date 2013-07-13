@@ -6,17 +6,17 @@
 ;; Maintainer: Joe Bloggs <vapniks@yahoo.com>
 ;; Copyleft (Ↄ) 2013, Joe Bloggs, all rites reversed.
 ;; Created: 2013-05-15 05:04:08
-;; Version: 1.1
-;; Last-Updated: 2013-05-15 05:04:08
+;; Version: 1.2
+;; Last-Updated: 2013-07-13 03:06:00
 ;;           By: Joe Bloggs
 ;; URL: https://github.com/vapniks/kmacro-decision
 ;; Keywords: convenience
 ;; Compatibility: GNU Emacs 24.3.1
-;; Package-Requires: ((el-x "1.0"))
+;; Package-Requires: ((el-x "1.0") (jb-misc-macros "0.1"))
 ;;
 ;; Features that might be required by this library:
 ;;
-;; el-x
+;; el-x jb-misc-macros
 ;;
 
 ;;; This file is NOT part of GNU Emacs
