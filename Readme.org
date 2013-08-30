@@ -46,7 +46,8 @@ by customizing `kmacro-decision-conditions'.
 
 * Installation
 
- - If you have [[http://www.marmalade-repo.org/][marmalade-repo.org]], this kmacro-decision is part of the emacs packages you can install.  
-   Just type M-x package-install kmacro-decision marmalade 
+ - If you use [[http://www.marmalade-repo.org/][marmalade-repo.org]] or [[http://melpa.milkbox.net/][MELPA]],
+   then kmacro-decision is one of the emacs packages you can install.  
+   Just type M-x package-install kmacro-decision
  - Otherwise download the library from here Lisp:kmacro-decision.el, and put it in a directory in the emacs load path, like ~/.emacs.d
  - Add (require 'kmacro-decision) in your ~/.emacs file
