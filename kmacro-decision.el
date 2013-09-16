@@ -118,6 +118,8 @@
   :type '(repeat string)
   :group 'kmacro)
 
+(defvar kmacro-decision-condition-history nil)
+
 (defun kmacro-decision-recursive-edit nil
   "Enter recursive edit, binding `end-kbd-macro' to `exit-recursive-edit' and setting `kmacro-call-repeat-key' to nil.
 Also temporarily disable any currently running keyboard macro."
@@ -190,7 +192,8 @@ is reached."
                 ((eq val 'edit) (funcall editfunc nil))
                 ((eq val 'branch)
                  (let* ((condition (read-from-minibuffer
-                                    "Condition: " nil nil nil nil
+                                    "Condition: " nil nil nil 
+                                    'kmacro-decision-condition-history
                                     kmacro-decision-conditions))
                         (action (kmacro-decision-menu t))
                         (resetmacro "(let* ((calling-kbd-macro executing-kbd-macro) (executing-kbd-macro nil)) ")
