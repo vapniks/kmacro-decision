@@ -192,7 +192,7 @@ is reached."
                 ((eq val 'edit) (funcall editfunc nil))
                 ((eq val 'branch)
                  (let* ((condition (read-from-minibuffer
-                                    "Condition: " nil nil nil 
+                                    "Condition: " nil nil nil
                                     'kmacro-decision-condition-history
                                     kmacro-decision-conditions))
                         (action (kmacro-decision-menu t))
@@ -208,7 +208,7 @@ is reached."
                                               (prin1-to-string it) ")" revertmacro)))
                             (useredit "(kmacro-decision-recursive-edit)")
                             (form
-                             (concat resetmacro 
+                             (concat resetmacro
                                      (read-from-minibuffer
                                       "Elisp: " nil read-expression-map nil
                                       'read-expression-history)
@@ -225,7 +225,7 @@ is reached."
                         (pre (subseq calling-kbd-macro 0 executing-kbd-macro-index))
                         (condexists (and (> (length pre) 33)
                                          (equal (string-to-vector "(t (kmacro-decision)))")
-                                                (subseq pre -26))))
+                                                (subseq pre -23))))
                         (post (subseq calling-kbd-macro executing-kbd-macro-index))
                         (condcode
                          (concatenate 'vector
@@ -233,8 +233,10 @@ is reached."
                                         (concatenate 'vector (kbd "M-:") "(cond "))
                                       "(" condition " " actioncode ") "
                                       "(t (kmacro-decision)))")))
-                   (setq pre (if condexists (subseq pre 0 -26) (concatenate 'vector pre "")))
-                   (setq last-kbd-macro (concatenate 'vector pre condcode post))))
+                   (setq pre (if condexists (subseq pre 0 -23) (concatenate 'vector pre ""))
+                         last-kbd-macro (concatenate 'vector pre condcode post)
+                         executing-kbd-macro last-kbd-macro
+                         executing-kbd-macro-index (+ (length pre) (length condcode)))))
                 ((and val (symbolp val)) (funcall val))
                 (t (message nil))))))))
 
