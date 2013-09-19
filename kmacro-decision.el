@@ -61,10 +61,16 @@
 ;; By adding query points to the end of each newly created macro, macro decision trees can be built up
 ;; and complex automated operations performed.
 
-;; Note: you can also use `kbd-macro-query' to choose a named macro to replay when not recording a macro
-;; (in case you forgot the name). Also note that when prompted for a condition you can scroll forward through
-;; the input history using M-n to get conditions for searching for strings/regexps. You can add to this list
-;; by customizing `kmacro-decision-conditions'.
+;; NOTES: 
+;;
+;; If you are creating a complex macro with several layers of conditional branching you should build it up
+;; layer at a time from the bottom up, naming the constituent macros as you go. You need to make sure all
+;; conditions of a constituent macro are defined before using that macro in another one as you will not be
+;; able to edit the constituent macro while running the parent macro. It may be safer to just write a program
+;; to do the task instead.
+;; If you want to see what macros have been named (and maybe run one) you can use `kbd-macro-query' (C-x C-k q).
+;; Also note that when prompted for a condition you can scroll forward through the input history using M-n to get
+;; conditions for searching for strings/regexps. You can add to this list by customizing `kmacro-decision-conditions'.
 
 ;;; Customizable Options:
 ;;
@@ -100,7 +106,7 @@
 
 ;;; TODO
 ;;
-;; Finish `kmacro-decision-menu', and integrate with `one-key-read-list' if available.
+;; Integrate with `one-key-read-list' if available.
 ;;
 
 ;;; Require
