@@ -16,7 +16,7 @@
 ;;
 ;; Features that might be required by this library:
 ;;
-;; el-x jb-misc-macros
+;; el-x jb-misc-macros cl-lib
 ;;
 
 ;;; This file is NOT part of GNU Emacs
@@ -113,6 +113,7 @@
 
 (require 'el-x)                         ;needed for dflet
 (require 'jb-misc-macros)               ;misc macros
+(require 'cl-lib)
 
 ;;; Code:
 
@@ -286,29 +287,29 @@ Such a \"function\" cannot be called from Lisp, but it is a valid editor command
   (put symbol 'kmacro t)
   symbol)
 
-(defun* kmacro-decision-menu (&optional withcond)
+(cl-defun kmacro-decision-menu (&optional withcond)
   "Prompt the user for an action to perform at a query point in a keyboard macro.
 If WITHCOND is non-nil then prompt for an action to perform for the previously entered
 condition.
 This function returns one of the following symbols 'continue, 'edit, 'new, 'branch, 'quit
 or a symbol corresponding to a named keyboard macro."
   (let* ((kmacros (reverse (kmacro-decision-named-macros)))
-         (nmacros (1- (length kmacros)))
-         (prompts (append (list "Recenter window about cursor"
-                                "Continue executing macro"
-                                "Recursive edit now (C-M-c to finish)")
-                          (if withcond '("Recursive edit when called" "Eval elisp" "Execute command")
-                            '("Add conditional branch"))
-                          (mapcar (lambda (k) (format "%s" k)) kmacros)))
-         (keys (append (list (kbd "C-l") (kbd "SPC") (kbd "RET"))
-                       (if withcond '("r" "e" "x") '("?"))))
-         (forms (append '((recenter-top-bottom) 'continue 'edit)
-                        (if withcond '('useredit 'form 'command) '('branch))
-                        kmacros)))
+	 (nmacros (1- (length kmacros)))
+	 (prompts (append (list "Recenter window about cursor"
+				"Continue executing macro"
+				"Recursive edit now (C-M-c to finish)")
+			  (if withcond '("Recursive edit when called" "Eval elisp" "Execute command")
+			    '("Add conditional branch"))
+			  (mapcar (lambda (k) (format "%s" k)) kmacros)))
+	 (keys (append (list (kbd "C-l") (kbd "SPC") (kbd "RET"))
+		       (if withcond '("r" "e" "x") '("?"))))
+	 (forms (append '((recenter-top-bottom) 'continue 'edit)
+			(if withcond '('useredit 'form 'command) '('branch))
+			kmacros)))
     (jb-untilnext nil (jb-read-key-menu prompts forms
-                                        (concat "Choose action to perform"
-                                                (if t " when condition is non-nil:\n" ":\n"))
-                                        nil keys))))
+					(concat "Choose action to perform"
+						(if t " when condition is non-nil:\n" ":\n"))
+					nil keys))))
 
 ;;;###autoload
 (defalias 'kbd-macro-query 'kmacro-decision
